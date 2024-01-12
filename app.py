@@ -29,7 +29,7 @@ if prompt := st.chat_input("Enter your Medication (comma seperated)"):
     print("Total salts",total_salts)
     print("Salts",salts)
     enter = "\n\n"
-    response = f"For the following medicines:  {', '.join([s.title() for s in medicines])}.\n\n You are consuming: {', '.join([s.title() for s in salts])}"
+    response = f"**For the following medicines:**  {', '.join([s.title() for s in medicines])}.\n\n :red[**You are consuming:**] {', '.join([s.title() for s in salts])}"
     with st.chat_message("assistant"):
         st.markdown(response)
     st.session_state.messages.append({"role": "assistant", "content": response})
@@ -38,11 +38,11 @@ if prompt := st.chat_input("Enter your Medication (comma seperated)"):
         response = "No Alternatives are there"
     else:
         alt = final_med.keys()
-        response = f':green[You can reduce your medicines to {len(alt)} from {total_meds}.]'
+        response = f':green[**You can reduce your medicines to {len(alt)} from {total_meds}.**]'
         for k in final_med:
             num_alters = len(final_med[k])
             display = num_alters if num_alters < 5 else 5
-            response += f"\t\n\n**For salt combinations** {', '.join([s.title() for s in k])}: There are **{num_alters}** alternatives.\t\n\n**Some of alternatives** are:\n\n{f'{enter}'.join([s.title() for s in random.choices(final_med[k],k=display)])}"
+            response += f"\t\n\n**For salt combination** [{', '.join([s.title() for s in k])}] There are **{num_alters}** alternatives.\t\n\n**Some of alternatives are:**\n\n{f'{enter}'.join([s.title() for s in random.choices(final_med[k],k=display)])}"
 
     # response = f"Medicine Name: {medicine.title()} \n\nSalt Composition: {', '.join([s.title() for s in salts])}\n\nAlternatives: {', '.join([m.title() for m in full_match])}"
     # Display assistant response in chat message container
