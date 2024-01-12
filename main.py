@@ -141,7 +141,7 @@ def medication_optimization(meds):
     return {},total_salts,list(salts),medicines
 
 # print(medication_optimization(["dolo","combiflame"]))
-
+# abufen c, dolo, augmentin
 # def medication_optimization(meds):
 #     medicines = []
 #     salts = set([])
