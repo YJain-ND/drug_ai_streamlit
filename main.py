@@ -5,6 +5,8 @@ from sklearn.neighbors import NearestNeighbors
 from datetime import datetime
 from itertools import combinations
 
+from itertools import chain, combinations
+
 def filter_words(word):
     remove_words = ['tablet',
              'injection',
@@ -74,6 +76,26 @@ def medicine_details(med):
             other_alters.append(alt)
     return medicine_used,salts_in_match,full_match_alters,other_alters
 
+def get_subsets(lst):
+    return list(chain.from_iterable(combinations(lst, r) for r in range(1,len(lst) + 1)))
+
+def find_combinations(subsets):
+    full_set = set().union(*subsets)
+    
+    def dfs(index, current_combination, remaining_elements):
+        if not remaining_elements:
+            combinations.append(current_combination)
+            return
+
+        for i in range(len(subsets)-1,index-1, -1):
+            new_combination = current_combination + [subsets[i]]
+            new_remaining = remaining_elements - set(subsets[i])
+            dfs(i + 1, new_combination, new_remaining)
+
+    combinations = []
+    dfs(0, [], full_set)
+
+    return combinations
 
 def medication_optimization(meds):
     medicines = []
@@ -86,29 +108,74 @@ def medication_optimization(meds):
         salts = salts.union(set(salt))
         matches.append(set(full_match_alters))
     total_salts = len(salts)
-    for i in range(len(salts),len(salts)//2,-1):
-        combs = list(combinations(salts, i))
-        print(combs)
+    subsets = get_subsets(salts)
+    all_combinations = find_combinations(subsets)
+    
+    for combination in all_combinations:
+        print("Searching for combinations:", combination)
+        if len(combination) >= len(meds):
+            continue
         combs_match = {}
-        for comb in combs:
-            prod = 1
+        prod = 1
+        for comb in combination:
+            print("Combination:",comb)
             full_match_alters = []
             meds_alter = set([])
+            inital = True
             for salt in comb:
-                if meds_alter == set([]):
+                if inital:
                     meds_alter = set(salt2med[salt])
+                    inital = False
                 else:
                     meds_alter = meds_alter.intersection(set(salt2med[salt]))
+                print(f"Salt: {salt} | Intersections: {len(meds_alter)}")
+
             for alt in meds_alter:
                 if len(med2salt[alt]['composition']) == len(comb):
                     full_match_alters.append(alt)
-            prod *= len(full_match_alters) 
+
+            prod *= len(full_match_alters)
             combs_match[comb] = full_match_alters
         if prod != 0:
-            break    
-    return combs_match,total_salts,list(salts)
+            return combs_match,total_salts,list(salts),medicines
+    return {},total_salts,list(salts),medicines
 
-# medication_optimization(["oronac plus","biospaaz"])
+# print(medication_optimization(["dolo","combiflame"]))
+
+# def medication_optimization(meds):
+#     medicines = []
+#     salts = set([])
+#     matches = []
+#     for med in meds:
+#         print(med)
+#         medicine,salt,full_match_alters,other_alters = medicine_details(med.lower())
+#         medicines.append(medicine)
+#         salts = salts.union(set(salt))
+#         matches.append(set(full_match_alters))
+#     total_salts = len(salts)
+#     for i in range(len(salts),len(salts)//2,-1):
+#         combs = list(combinations(salts, i))
+#         print(combs)
+#         combs_match = {}
+#         for comb in combs:
+#             prod = 1
+#             full_match_alters = []
+#             meds_alter = set([])
+#             for salt in comb:
+#                 print(salt)
+#                 if meds_alter == set([]):
+#                     meds_alter = set(salt2med[salt])
+#                 else:
+#                     meds_alter = meds_alter.intersection(set(salt2med[salt]))
+#             for alt in meds_alter:
+#                 if len(med2salt[alt]['composition']) == len(comb):
+#                     full_match_alters.append(alt)
+#             prod *= len(full_match_alters) 
+#             print(len(full_match_alters))
+#             combs_match[comb] = full_match_alters
+#         if prod != 0:
+#             break    
+#     return combs_match,total_salts,list(salts),medicines
 
 # med = input("Medicine name: ").lower()
 # start = datetime.now()
