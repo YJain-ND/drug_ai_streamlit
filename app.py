@@ -4,7 +4,7 @@ from main import medicine_details,medication_optimization
 
 st.title("DrugAI")
 st.markdown(f"""<p style="font-size:1.5rem;">Type your medication in the text box bellow and get to know more about your medication.</p>""",unsafe_allow_html=True)
-
+enter = "\n\n"
 # Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -19,43 +19,67 @@ if prompt := st.chat_input("Enter your Medication (comma seperated)"):
     # Display user message in chat message container
     st.chat_message("user").markdown(prompt)
     # Add user message to chat history
-    all_meds = [pro.strip() for pro in prompt.split(",")]
+    all_meds = [pro.strip() for pro in prompt.split(",") if pro.strip()!= ""]
 
     total_meds = len(all_meds)
     st.session_state.messages.append({"role": "user", "content": prompt})
-    response = f"Collecting information for {prompt.title()} ....."
-    # st.chat_message("assistant").write(response)
-    # medicine,salts,full_match,other_matches = medicine_details(prompt.lower())
-    # final_med,total_salts,salts,medicines = medication_optimization(all_meds)
-    enter = "\n\n"
-    with st.spinner("Collecting Information for your medication..."):
-        (
-            final_med,
-            total_salts,
-            salts,
-            medicines,
-        ) = medication_optimization(all_meds)
-    print("Total salts",total_salts)
-    print("Salts",salts)
-    response = f"**For the following medicines:**  {', '.join([s.title() for s in medicines])}.\n\n :red[**You are consuming:**] {', '.join([s.title() for s in salts])}"
-    with st.chat_message("assistant"):
-        st.markdown(response)
-    st.session_state.messages.append({"role": "assistant", "content": response})
-    print(final_med)
-    if len(final_med.keys()) == 0:
-        response = "No Alternatives are there"
+    if total_meds == 0:
+        response = "Please enter atleast one medicine name"
+        with st.chat_message("assistant"):
+            st.markdown(response)
+        st.session_state.messages.append({"role": "assistant", "content": response})
+    elif total_meds == 1:
+        with st.spinner("Collecting Information for your medication..."):
+            (
+                medicine_used,
+                salts_in_match,
+                full_match_alters,
+                other_alters,
+            ) = medicine_details(all_meds[0])
+        num_alters = len(full_match_alters)
+        response = f"**For the following medicines:**  {medicine_used.title()}.\n\n :red[**You are consuming:**] {', '.join([s.title() for s in salts_in_match])}"
+        with st.chat_message("assistant"):
+            st.markdown(response)
+        display = num_alters if num_alters < 5 else 5
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        response = f"\t\n\n**For salt combination** [{', '.join([s.title() for s in salts_in_match])}] There are **{num_alters}** alternatives.\t\n\n**Some of alternatives are:**\n\n{f'{enter}'.join([s.title() for s in random.choices(full_match_alters,k=display)])}"
+        with st.chat_message("assistant"):
+            st.markdown(response)
+        st.session_state.messages.append({"role": "assistant", "content": response})
     else:
-        alt = final_med.keys()
-        response = f':green[**You can reduce your medicines to {len(alt)} from {total_meds}.**]'
-        for k in final_med:
-            num_alters = len(final_med[k])
-            display = num_alters if num_alters < 5 else 5
-            response += f"\t\n\n**For salt combination** [{', '.join([s.title() for s in k])}] There are **{num_alters}** alternatives.\t\n\n**Some of alternatives are:**\n\n{f'{enter}'.join([s.title() for s in random.choices(final_med[k],k=display)])}"
+        response = f"Collecting information for {prompt.title()} ....."
+        # st.chat_message("assistant").write(response)
+        # medicine,salts,full_match,other_matches = medicine_details(prompt.lower())
+        # final_med,total_salts,salts,medicines = medication_optimization(all_meds)
+        
+        with st.spinner("Collecting Information for your medication..."):
+            (
+                final_med,
+                total_salts,
+                salts,
+                medicines,
+            ) = medication_optimization(all_meds)
+        print("Total salts",total_salts)
+        print("Salts",salts)
+        response = f"**For the following medicines:**  {', '.join([s.title() for s in medicines])}.\n\n :red[**You are consuming:**] {', '.join([s.title() for s in salts])}"
+        with st.chat_message("assistant"):
+            st.markdown(response)
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        print(final_med)
+        if len(final_med.keys()) == 0:
+            response = "No Alternatives to reduce your medicines"
+        else:
+            alt = final_med.keys()
+            response = f':green[**You can reduce your medicines to {len(alt)} from {total_meds}.**]'
+            for k in final_med:
+                num_alters = len(final_med[k])
+                display = num_alters if num_alters < 5 else 5
+                response += f"\t\n\n**For salt combination** [{', '.join([s.title() for s in k])}] There are **{num_alters}** alternatives.\t\n\n**Some of alternatives are:**\n\n{f'{enter}'.join([s.title() for s in random.choices(final_med[k],k=display)])}"
 
-    # response = f"Medicine Name: {medicine.title()} \n\nSalt Composition: {', '.join([s.title() for s in salts])}\n\nAlternatives: {', '.join([m.title() for m in full_match])}"
-    # Display assistant response in chat message container
-    with st.chat_message("assistant"):
-        st.markdown(response)
-    # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": response})
+        # response = f"Medicine Name: {medicine.title()} \n\nSalt Composition: {', '.join([s.title() for s in salts])}\n\nAlternatives: {', '.join([m.title() for m in full_match])}"
+        # Display assistant response in chat message container
+        with st.chat_message("assistant"):
+            st.markdown(response)
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response})
 
